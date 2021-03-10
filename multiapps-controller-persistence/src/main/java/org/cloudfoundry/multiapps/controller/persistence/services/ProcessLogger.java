@@ -1,13 +1,21 @@
 package org.cloudfoundry.multiapps.controller.persistence.services;
 
-import java.io.File;
-
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.message.MessageFactory;
+
+import java.io.File;
 
 public class ProcessLogger extends Logger {
 
     private static final String NULL_LOGGER_NAME = "Null logger";
+    private static final LoggerContext LOGGER_CONTEXT = (LoggerContext) LogManager.getContext(false);
+    private static final Configuration CONFIGURATION = LOGGER_CONTEXT.getConfiguration();
+    private static final MessageFactory MESSAGE_FACTORY = LogManager.getLogger()
+                                                                    .getMessageFactory();
 
     private Logger logger;
     private File log;
@@ -17,7 +25,7 @@ public class ProcessLogger extends Logger {
     protected final String activityId;
 
     public ProcessLogger(Logger logger, File log, String logName, String spaceId, String processId, String activityId) {
-        super(logger.getName());
+        super(LOGGER_CONTEXT, logName, MESSAGE_FACTORY);
         this.logger = logger;
         this.log = log;
         this.logName = logName;
@@ -27,7 +35,7 @@ public class ProcessLogger extends Logger {
     }
 
     public ProcessLogger(String spaceId, String processId, String activityId) {
-        super(NULL_LOGGER_NAME);
+        super(LOGGER_CONTEXT, NULL_LOGGER_NAME, MESSAGE_FACTORY);
         this.spaceId = spaceId;
         this.processId = processId;
         this.activityId = activityId;
@@ -68,9 +76,16 @@ public class ProcessLogger extends Logger {
         logger.warn(message, t);
     }
 
-    @Override
     public synchronized void removeAllAppenders() {
-        logger.removeAllAppenders();
+        if (!logger.getAppenders()
+                   .isEmpty()) {
+            for (String appenderName : logger.getAppenders()
+                                             .keySet()) {
+                CONFIGURATION.getRootLogger()
+                             .removeAppender(appenderName);
+            }
+            LOGGER_CONTEXT.updateLoggers();
+        }
     }
 
     public String getProcessId() {

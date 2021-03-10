@@ -1,12 +1,12 @@
 package org.cloudfoundry.multiapps.controller.core.auditlogging.impl;
 
-import java.sql.Timestamp;
-
-import javax.sql.DataSource;
-
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
 import org.cloudfoundry.multiapps.controller.core.auditlogging.UserInfoProvider;
 import org.cloudfoundry.multiapps.controller.core.auditlogging.impl.DBAppender.LogEventAdapter;
+
+import java.sql.Timestamp;
+import javax.sql.DataSource;
 
 class AuditLogManager {
 
@@ -53,15 +53,14 @@ class AuditLogManager {
     }
 
     private Logger setUpLogger(DataSource dataSource, UserInfoProvider userInfoProvider, String name) {
-        Logger logger = Logger.getLogger(name);
+        Logger logger = (Logger) LogManager.getLogger(name);
         DBAppender auditLogAppender = new DBAppender(dataSource,
                                                      AUDIT_LOG_INSERT_STATEMENT,
                                                      EVENT_ADAPTER,
                                                      exceptionHandler,
-                                                     userInfoProvider);
-        auditLogAppender.setName(name);
+                                                     userInfoProvider,
+                                                     name);
         logger.addAppender(auditLogAppender);
         return logger;
     }
-
 }

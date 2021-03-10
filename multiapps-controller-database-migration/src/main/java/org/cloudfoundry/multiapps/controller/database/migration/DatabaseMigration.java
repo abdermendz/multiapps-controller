@@ -1,21 +1,22 @@
 package org.cloudfoundry.multiapps.controller.database.migration;
 
-import java.io.IOException;
-import java.io.InputStream;
-
-import javax.sql.DataSource;
-
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.ConfigurationSource;
 import org.cloudfoundry.multiapps.controller.database.migration.executor.DatabaseSequenceMigrationExecutor;
 import org.cloudfoundry.multiapps.controller.database.migration.executor.DatabaseTableMigrationExecutor;
 import org.cloudfoundry.multiapps.controller.database.migration.executor.ImmutableDatabaseSequenceMigrationExecutor;
 import org.cloudfoundry.multiapps.controller.database.migration.executor.ImmutableDatabaseTableMigrationExecutor;
 import org.cloudfoundry.multiapps.controller.database.migration.extractor.DataSourceEnvironmentExtractor;
 
+import java.io.IOException;
+import java.io.InputStream;
+import javax.sql.DataSource;
+
 public class DatabaseMigration {
 
-    private static final Logger LOGGER = Logger.getLogger(DatabaseMigration.class);
+    private static final Logger LOGGER = (Logger) LogManager.getLogger(DatabaseMigration.class);
 
     public static void main(String[] args) {
         configureLogger();
@@ -47,7 +48,9 @@ public class DatabaseMigration {
         if (classLoader != null) {
             try (InputStream inputStream = classLoader.getResourceAsStream("console-logger.properties")) {
                 if (inputStream != null) {
-                    PropertyConfigurator.configure(inputStream);
+                    LoggerContext loggerContext = (LoggerContext) LogManager.getContext(false);
+                    ConfigurationSource configSource = new ConfigurationSource(inputStream);
+                    loggerContext.setConfigLocation(configSource.getURI());
                 }
             } catch (IOException e) {
                 // Using System.out.println() instead of LOGGER.warn(), because logging is likely not configured due to the exception.
